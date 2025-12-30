@@ -6,17 +6,18 @@ library(ggfortify)
 library(gplots)
 library(ggsignif)
 library(ggpubr)
-
 setwd("C:/Users/guyha/Desktop/chemotherpy experiment/DAPI (chemo treatments)")
-
+# setwd("C:/Users/owner/Desktop/chemotherpy experiment/DAPI (chemo treatments)")
 FU_2n_10G <- read.csv("Results 2n 10G 5-FU.csv")
 Bleo_2n_10G <- read.csv("Results 2n 10G Bleo.csv")
 Cis_2n_10G <- read.csv("Results 2n 10G Cis.csv")
+#DMSO_2n_10G <- read.csv("Results 2n 10G DMSO.csv")
 Pacli_2n_10G <- read.csv("Results 2n 10G Pacli.csv")
 UT_2n_10G <- read.csv("Results 2n 10G UT.csv")
 FU_2n_10R <- read.csv("Results 2n 10R 5-FU.csv")
 Bleo_2n_10R <- read.csv("Results 2n 10R Bleo.csv")
 Cis_2n_10R <- read.csv("Results 2n 10R Cis.csv")
+#DMSO_2n_10R <- read.csv("Results 2n 10R DMSO.csv")
 Pacli_2n_10R <- read.csv("Results 2n 10R Pacli.csv")
 UT_2n_10R <- read.csv("Results 2n 10R UT.csv")
 
@@ -25,16 +26,19 @@ FU_H <- read.csv("Results 3n clone H 5-FU.csv")
 Cis_H <- read.csv("Results 3n clone H Cis.csv")
 Pacli_H <- read.csv("Results 3n clone H Pacli.csv")
 Bleo_H <- read.csv("Results 3n clone H Bleo.csv")
+#DMSO_H <- read.csv("Results 3n clone H DMSO.csv")
 UT_H <- read.csv("Results 3n clone H UT.csv")
 FU_L <- read.csv("Results 3n clone L 5-FU.csv")
 Cis_L <- read.csv("Results 3n clone L Cis.csv")
 Pacli_L <- read.csv("Results 3n clone L Pacli.csv")
 Bleo_L <- read.csv("Results 3n clone L Bleo.csv")
+#DMSO_L <- read.csv("Results 3n clone L DMSO.csv")
 UT_L <- read.csv("Results 3n clone L UT.csv")
 FU_K <- read.csv("Results 3n clone K 5-FU.csv")
 Cis_K <- read.csv("Results 3n clone K Cis.csv")
 Pacli_K <- read.csv("Results 3n clone K Pacli.csv")
 Bleo_K <- read.csv("Results 3n clone K Bleo.csv")
+#DMSO_K <- read.csv("Results 3n clone K DMSO.csv")
 UT_K <- read.csv("Results 3n clone K UT.csv")
 
 
@@ -65,14 +69,71 @@ Chemo_response$Treatment <- c(rep("5-Fluorouracil",672),rep("Cisplatin",613),
                               rep("Paclitaxel",437),rep("Bleomycin",352),
                               rep("Untreated",491))
 
+ggbarplot(Chemo_response, x= "Treatment", y= "Area", add="mean_se",position = position_dodge(0.8),fill = "X")+
+  theme_classic()+theme(legend.position = "top")
+
+
+## filtering the dataset for nuclei of 6um in diameter or higher:
+Chemo_response <- Chemo_response[Chemo_response$Area>(pi*4*3^2),]
+ggbarplot(Chemo_response, x= "Treatment", y= "Area", add="mean_se",position = position_dodge(0.8),fill = "X")+
+  theme_classic()+theme(legend.position = "top")
+
+# library(BSDA)
+write.csv(x = Chemo_response,"Chemo_response.csv")
+
+### Nuclear shape:
+stat=compare_means(Circ.~Ploidy,eps=0, data = Chemo_response, method="t.test",group.by = "Treatment")
+ggbarplot(Chemo_response, x= "Treatment", y= "Circ.", add="mean_se",position = position_dodge(0.8),fill = "Ploidy")+
+  stat_pvalue_manual(data = stat, label = "p.format", y.position = c(0.8),x = "Treatment", size = 3,tip.length = 0.02, hide.ns = T)+
+  theme_classic()+theme(legend.position = "top")+scale_fill_manual(values = c("royalblue","red3"))+
+  xlab("Treatment")+ylab("Nuclei Circularity")+scale_y_continuous(expand = c(0,0),limits = c(0,1))
+ggsave("Barplot of mean nuclear circularity by ploidy and treatment.pdf",device = "pdf")
+
+stat=compare_means(Round~Ploidy,eps=0, data = Chemo_response, method="t.test",group.by = "Treatment")
+ggbarplot(Chemo_response, x= "Treatment", y= "Round", add="mean_se",position = position_dodge(0.8),fill = "Ploidy")+
+  stat_pvalue_manual(data = stat, label = "p.format", y.position = c(0.8),x = "Treatment", size = 3,tip.length = 0.02, hide.ns = T)+
+  theme_classic()+theme(legend.position = "top")+scale_fill_manual(values = c("royalblue","red3"))+
+  xlab("Treatment")+ylab("Nuclei Roundness")+scale_y_continuous(expand = c(0,0),limits = c(0,1))
+ggsave("Barplot of mean nuclear roundness by ploidy and treatment.pdf",device = "pdf")
+
+### Nuclear area and volume:
+stat=compare_means(Area~Ploidy,eps=0, data = Chemo_response, method="t.test",group.by = "Treatment")
+ggbarplot(Chemo_response, x= "Treatment", y= "Area", add="mean_se",position = position_dodge(0.8),fill = "Ploidy",
+          order = c("5-Fluorouracil","Cisplatin","Bleomycin","Paclitaxel","DMSO","Untreated"))+
+  stat_pvalue_manual(data = stat, label = "p.format", y.position = c(320),vjust = 1.5,x = "Treatment", size = 3,tip.length = 0.02, hide.ns = T)+
+  theme_classic()+theme(legend.position = "top")+scale_fill_manual(values = c("royalblue","red3"))+
+  xlab("Treatment")+ylab("Nuclei Area")+scale_y_continuous(expand = c(0,0))
+ggsave("Barplot of mean nuclear area by ploidy and treatment.pdf",device = "pdf")
 
 Chemo_response$Relative_Area <- Chemo_response$Area/mean(Chemo_response[Chemo_response$Ploidy=="2n" & Chemo_response$Treatment=="Untreated",2])
+stat=compare_means(Relative_Area~Ploidy,eps=0, data = Chemo_response, method="t.test",group.by = "Treatment")
+ggbarplot(Chemo_response, x= "Treatment", y= "Relative_Area", add="mean_se",position = position_dodge(0.8),fill = "Ploidy",
+          order = c("5-Fluorouracil","Cisplatin","Bleomycin","Paclitaxel","DMSO","Untreated"))+
+  stat_pvalue_manual(data = stat, label = "p.format",y.position = 2.51,vjust = 1.5, x = "Treatment", size = 3,tip.length = 0.02, hide.ns = T)+
+  theme_classic()+theme(legend.position = "top")+scale_fill_manual(values = c("royalblue","red3"))+
+  xlab("Treatment")+ylab("Relative Nuclei Area")+scale_y_continuous(expand = c(0,0))
+ggsave("Barplot of relative mean nuclear area by ploidy and treatment.pdf",device = "pdf")
 
 
 Chemo_response$Radius <- (Chemo_response$Area/(4*pi))^0.5
 Chemo_response$Volume <- ((Chemo_response$Radius)^3)*pi*4/3
+stat=compare_means(Volume~Ploidy,eps=0, data = Chemo_response, method="t.test",group.by = "Treatment")
+ggbarplot(Chemo_response, x= "Treatment", y= "Volume", add="mean_se",position = position_dodge(0.8),fill = "Ploidy",
+          order = c("5-Fluorouracil","Cisplatin","Bleomycin","Paclitaxel","DMSO","Untreated"))+
+  stat_pvalue_manual(data = stat, label = "p.format", y.position = c(600),vjust = 1.5,x = "Treatment", size = 3,tip.length = 0.02, hide.ns = T)+
+  theme_classic()+theme(legend.position = "top")+scale_fill_manual(values = c("royalblue","red3"))+
+  xlab("Treatment")+ylab("Nuclei Volume")+scale_y_continuous(expand = c(0,0))
+ggsave("Barplot of mean nuclear volume by ploidy and treatment.pdf",device = "pdf")
 
 Chemo_response$Relative_Volume_to_2n <- Chemo_response$Volume/mean(Chemo_response[Chemo_response$Ploidy=="2n" & Chemo_response$Treatment=="Untreated",12])
+ggbarplot(Chemo_response, x= "Treatment", y= "Relative_Volume_to_2n", add="mean_se",position = position_dodge(0.8),fill = "Ploidy",
+          order = c("5-Fluorouracil","Cisplatin","Bleomycin","Paclitaxel","DMSO","Untreated"))+
+  stat_pvalue_manual(data = stat, label = "p.adj", y.position = c(4.25),vjust = 1.75,x = "Treatment", size = 3,tip.length = 0.02, hide.ns = T)+
+  theme_classic()+theme(legend.position = "top")+scale_fill_manual(values = c("royalblue","red3"))+
+  xlab("Treatment")+ylab("Relative Nuclei Volume")+geom_hline(yintercept = 1.5,linetype = 2,colour = "darkgrey")+
+  scale_y_continuous(expand = c(0,0))
+ggsave("Barplot of relative mean nuclear volume by ploidy state and treatment.pdf",device = "pdf")
+
 
 Chemo_response$Relative_Volume_by_ploidy <- rep(0,nrow(Chemo_response))
 Chemo_response[Chemo_response$Ploidy=="2n",14] <- Chemo_response[Chemo_response$Ploidy=="2n",12]/mean(Chemo_response[Chemo_response$Ploidy=="2n" & Chemo_response$Treatment=="Untreated",12])
@@ -84,4 +145,4 @@ ggbarplot(Chemo_response, x= "Ploidy", y= "Relative_Volume_by_ploidy", add="mean
   theme_classic()+theme(legend.position = "top")+
   xlab("Ploidy")+ylab("Relative Nuclei Volume")+geom_hline(yintercept = 1.25,linetype = 2,colour = "darkgrey")+
   scale_y_continuous(expand = c(0,0),n.breaks = 10)+scale_fill_manual(values = c("#FE9929","#FEC44F","#FEE391","#FFF7BC","lightgrey"))
-# ggsave("Barplot of mean nuclear volume relative to each ploidy state and treatment.pdf",device = "pdf")
+ggsave("Barplot of mean nuclear volume relative to each ploidy state and treatment.pdf",device = "pdf")
